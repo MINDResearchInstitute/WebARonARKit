@@ -386,7 +386,8 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 
     // Load the default website.
     NSString *defaultSite =
-        @"https://developers.google.com/ar/develop/web/getting-started#examples";
+//        @"https://storage.googleapis.com/czoo/content/teddyar/handle.html";
+          @"https://10.0.1.24:8080/content/";
     NSURL *url = [NSURL URLWithString:defaultSite];
     [wkWebView loadRequest:[NSURLRequest requestWithURL:url]];
     [urlTextField setText:url.absoluteString];
@@ -1129,6 +1130,11 @@ didStartProvisionalNavigation:(null_unspecified WKNavigation *)navigation {
     _webviewNavigationSuccess = true;
 }
 
+- (void)webView:(WKWebView *)webView didReceiveAuthenticationChallenge:(nonnull NSURLAuthenticationChallenge *)challenge completionHandler:(nonnull void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler {
+    NSURLCredential * credential = [[NSURLCredential alloc] initWithTrust:[challenge protectionSpace].serverTrust];
+    completionHandler(NSURLSessionAuthChallengeUseCredential, credential);
+}
+
 - (void)webView:(WKWebView *)webView
 didFinishNavigation:(WKNavigation *)navigation {
     [self restartSession];
@@ -1277,16 +1283,16 @@ cameraDidChangeTrackingState:(ARCamera *)camera {
     if (camera.trackingState != ARTrackingStateNotAvailable &&
         !initialPageLoadedWhenTrackingBegins) {
         // Retore a URL from a previous execution and load it.
-        NSString *urlString = [self getURLFromUserDefaults];
-        if (urlString) {
-            // As the code bellow does not allow to store invalid URLs, we will assume
-            // that the URL is
-            // correct.
-            if (![self loadURLInWKWebView:urlString]) {
-                [self showAlertDialog:@"The URL is not valid." completionHandler:NULL];
-            }
-            urlTextField.text = urlString;
-        }
+//        NSString *urlString = [self getURLFromUserDefaults];
+//        if (urlString) {
+//            // As the code bellow does not allow to store invalid URLs, we will assume
+//            // that the URL is
+//            // correct.
+//            if (![self loadURLInWKWebView:urlString]) {
+//                [self showAlertDialog:@"The URL is not valid." completionHandler:NULL];
+//            }
+//            urlTextField.text = urlString;
+//        }
         initialPageLoadedWhenTrackingBegins = true;
     }
 }

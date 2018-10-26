@@ -67,6 +67,8 @@
           functionName + ':' + args.join(','));
     }
   }
+ 
+ window.callNativeFunction = callNativeFunction;
 
   function nativeHideCameraFeed() {
     callNativeFunction('hideCameraFeed')

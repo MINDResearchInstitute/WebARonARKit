@@ -20,6 +20,9 @@
 #import "ViewController.h"
 
 #import <sys/utsname.h>
+#import <CoreAudioKit/CoreAudioKit.h>
+#import <AVFoundation/AVFoundation.h>
+#import <CoreAudio/CoreAudioTypes.h>
 
 #define FBOX(x) [NSNumber numberWithFloat:x]
 
@@ -76,7 +79,9 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 @property(nonatomic, strong) ProgressView *progressView;
 @property(nonatomic, strong) NavigationView *navigationBacking;
 @property(nonatomic, assign) bool webviewNavigationSuccess;
-
+@property(nonatomic, strong) AVAudioRecorder* recorder;
+@property(nonatomic, strong) NSTimer *meterTimer;
+@property(nonatomic, strong) AVAudioSession *audioSession;
 @end
 
 @interface MTKView ()<RenderDestinationProvider>
@@ -255,6 +260,46 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
     } else {
         iPhoneXDevice = true;
     }
+}
+
+- (void)getAudioMeters {
+    NSError* error = nil;
+    NSURL *recorderUrl = [NSURL fileURLWithPath:@"/dev/null"];
+    NSDictionary *settings = [NSDictionary dictionaryWithObjectsAndKeys:
+                              [NSNumber numberWithFloat: 44100.0],                 AVSampleRateKey,
+                              [NSNumber numberWithInt: kAudioFormatAppleLossless], AVFormatIDKey,
+                              [NSNumber numberWithInt: 1],                         AVNumberOfChannelsKey,
+                              [NSNumber numberWithInt: AVAudioQualityMax],         AVEncoderAudioQualityKey,
+                              nil];
+    self.audioSession = [AVAudioSession sharedInstance];
+    [self.audioSession setCategory:AVAudioSessionCategoryRecord error: nil];
+    [self.audioSession setActive:YES error: nil];
+    
+    self.recorder = [[AVAudioRecorder alloc] initWithURL:recorderUrl settings:settings error:&error];
+    [self.recorder prepareToRecord];
+    self.recorder.meteringEnabled = YES;
+    [self.recorder record];
+    self.meterTimer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(updateAudioMeters)userInfo:nil repeats:YES];
+}
+
+- (void)updateAudioMeters {
+    [self.recorder updateMeters];
+    float averagePower = [self.recorder averagePowerForChannel:0];
+    float peakPower = [self.recorder peakPowerForChannel:0];
+
+    NSString* jsCode =
+    [NSString stringWithFormat:
+     @"if (window.receiveAudioMeters) window.receiveAudioMeters(%f,%f)", averagePower,peakPower];
+    
+    [wkWebView
+     evaluateJavaScript:jsCode
+     completionHandler:^(id data, NSError *error) {
+         if (error) {
+             [self showAlertDialog:
+              [NSString stringWithFormat:@"ERROR: Evaluating jscode: %@", error]
+                 completionHandler:^{ }];
+         }
+     }];
 }
 
 - (void)viewDidLoad {
@@ -1355,6 +1400,8 @@ cameraDidChangeTrackingState:(ARCamera *)camera {
             // The JS side stated that the AR data was used so we can render
             // a new camera frame now.
             drawNextCameraFrame = true;
+        } else if ([method isEqualToString:@"getAudioMeters"]) {
+            [self getAudioMeters];
         } else {
             NSLog(@"WARNING: Unknown message received: '%@'", method);
         }

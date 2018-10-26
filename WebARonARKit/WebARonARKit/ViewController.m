@@ -294,11 +294,11 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
     [wkWebView
      evaluateJavaScript:jsCode
      completionHandler:^(id data, NSError *error) {
-         if (error) {
-             [self showAlertDialog:
-              [NSString stringWithFormat:@"ERROR: Evaluating jscode: %@", error]
-                 completionHandler:^{ }];
-         }
+//         if (error) {
+//             [self showAlertDialog:
+//              [NSString stringWithFormat:@"ERROR: Evaluating jscode: %@", error]
+//                 completionHandler:^{ }];
+//         }
      }];
 }
 
@@ -432,7 +432,10 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
     // Load the default website.
     NSString *defaultSite =
 //        @"https://storage.googleapis.com/czoo/content/teddyar/handle.html";
-          @"https://10.0.1.24:8080/content/";
+          @"https://10.0.1.24:8080/content/polygonar/handle.html";
+//    @"https://10.0.1.24:8080/content/timesync/index.html";
+//    @"https://10.0.1.24:8080/content/sounddropoff/handle.html";
+    
     NSURL *url = [NSURL URLWithString:defaultSite];
     [wkWebView loadRequest:[NSURLRequest requestWithURL:url]];
     [urlTextField setText:url.absoluteString];
@@ -941,13 +944,13 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
     [wkWebView
      evaluateJavaScript:jsCode
      completionHandler:^(id data, NSError *error) {
-         if (error) {
-             [self showAlertDialog:
-              [NSString stringWithFormat:@"ERROR: Evaluating jscode: %@",
-               error]
-                 completionHandler:^{
-                 }];
-         }
+//         if (error) {
+//             [self showAlertDialog:
+//              [NSString stringWithFormat:@"ERROR: Evaluating jscode: %@",
+//               error]
+//                 completionHandler:^{
+//                 }];
+//         }
      }];
 }
 
@@ -1100,11 +1103,11 @@ didRemoveAnchors:(nonnull NSArray<ARAnchor *> *)anchors {
     [wkWebView
      evaluateJavaScript:jsCode
      completionHandler:^(id data, NSError *error) {
-       if (error) {
-         [self showAlertDialog:
-             [NSString stringWithFormat:@"ERROR: Evaluating jscode: %@", error]
-             completionHandler:^{ }];
-         }
+//       if (error) {
+//         [self showAlertDialog:
+//             [NSString stringWithFormat:@"ERROR: Evaluating jscode: %@", error]
+//             completionHandler:^{ }];
+//         }
      }];
 
     // This needs to be called after because the window size will affect the
@@ -1119,15 +1122,15 @@ didRemoveAnchors:(nonnull NSArray<ARAnchor *> *)anchors {
         [wkWebView
          evaluateJavaScript:updateWindowSizeJsCode
          completionHandler:^(id data, NSError *error) {
-             if (error) {
-                 [self showAlertDialog:[NSString
-                                        stringWithFormat:@"ERROR: Evaluating "
-                                        @"jscode to provide "
-                                        @"window size: %@",
-                                        error]
-                     completionHandler:^{
-                     }];
-             }
+//             if (error) {
+//                 [self showAlertDialog:[NSString
+//                                        stringWithFormat:@"ERROR: Evaluating "
+//                                        @"jscode to provide "
+//                                        @"window size: %@",
+//                                        error]
+//                     completionHandler:^{
+//                     }];
+//             }
          }];
         updateWindowSize = false;
     }

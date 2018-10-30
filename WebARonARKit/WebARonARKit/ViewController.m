@@ -1405,6 +1405,8 @@ cameraDidChangeTrackingState:(ARCamera *)camera {
             drawNextCameraFrame = true;
         } else if ([method isEqualToString:@"getAudioMeters"]) {
             [self getAudioMeters];
+        } else if ([method isEqualToString:@"playVibrate"]) {
+            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
         } else {
             NSLog(@"WARNING: Unknown message received: '%@'", method);
         }

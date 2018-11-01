@@ -432,10 +432,10 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
     // Load the default website.
     NSString *defaultSite =
 //        @"https://storage.googleapis.com/czoo/content/teddyar/handle.html";
-          @"https://10.0.1.24:8080/content/polygonar/handle.html";
+          @"https://192.168.1.11:8080/content/polygonar/handle.html?testclass=PolygonARHandle";
+//    @"http://www.boxfactura.com/pulltorefresh.js/demos/basic.html";
 //    @"https://10.0.1.24:8080/content/timesync/index.html";
 //    @"https://10.0.1.24:8080/content/sounddropoff/handle.html";
-    
     NSURL *url = [NSURL URLWithString:defaultSite];
     [wkWebView loadRequest:[NSURLRequest requestWithURL:url]];
     [urlTextField setText:url.absoluteString];
@@ -710,8 +710,8 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
                                  self.view.frame.size.width, PROGRESSVIEW_HEIGHT)];
         }
     } else {
-        [_navigationBacking setFrame:CGRectMake(0, 0, self.view.frame.size.width,
-                                                URL_TEXTFIELD_HEIGHT_EXPANDED)];
+//        [_navigationBacking setFrame:CGRectMake(0, 0, self.view.frame.size.width,
+//                                                URL_TEXTFIELD_HEIGHT_EXPANDED)];
         [backButton setFrame:CGRectMake(0, 0, URL_BUTTON_WIDTH_LANDSCAPE,
                                         URL_BUTTON_HEIGHT_LANDSCAPE)];
         [urlTextField setFont:[UIFont systemFontOfSize:17]];
@@ -725,16 +725,17 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
                              URL_BUTTON_WIDTH_LANDSCAPE, URL_BUTTON_HEIGHT_LANDSCAPE)];
 
 
-        int contentOffset = URL_TEXTFIELD_HEIGHT_EXPANDED;
+        int contentOffset = 0;//URL_TEXTFIELD_HEIGHT_EXPANDED;
         CGRect contentRect = CGRectMake(0, contentOffset, self.view.frame.size.width,
                                         self.view.frame.size.height - contentOffset);
 
         [mtkView setFrame:contentRect];
         [wkWebView setFrame:contentRect];
-
+//        wkWebView.scrollView.scrollEnabled = false;
+//        wkWebView.scrollView.showsHorizontalScrollIndicator = NO;
+//        wkWebView.scrollView.showsVerticalScrollIndicator = NO;
         [_progressView
-         setFrame:CGRectMake(0,
-                             URL_TEXTFIELD_HEIGHT_EXPANDED - PROGRESSVIEW_HEIGHT,
+         setFrame:CGRectMake(0, 0,
                              self.view.frame.size.width, PROGRESSVIEW_HEIGHT)];
     }
 }

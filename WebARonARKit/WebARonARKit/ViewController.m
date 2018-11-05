@@ -365,12 +365,12 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
     //        //WKWebsiteDataTypeIndexedDBDatabases,
     //        //WKWebsiteDataTypeWebSQLDatabases
     //    ]];
-    NSSet *websiteDataTypes = [WKWebsiteDataStore allWebsiteDataTypes];
-    NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
-    [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes
-                                               modifiedSince:dateFrom
-                                           completionHandler:^{
-                                           }];
+//    NSSet *websiteDataTypes = [WKWebsiteDataStore allWebsiteDataTypes];
+//    NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
+//    [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes
+//                                               modifiedSince:dateFrom
+//                                           completionHandler:^{
+//                                           }];
     // Make sure that WebARonARKit.js is injected at the beginning of any webpage
     // Load the WebARonARKit.js file
     NSString *WebARonARKitJSPath =
@@ -399,6 +399,7 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
     WKWebViewConfiguration *wkWebViewConfig =
     [[WKWebViewConfiguration alloc] init];
     wkWebViewConfig.userContentController = userContentController;
+    wkWebViewConfig.websiteDataStore = [WKWebsiteDataStore defaultDataStore];
     // Create the WKWebView using the configuration/script injection and add it to
     // the top of the view graph
     wkWebView = [[WKWebView alloc] initWithFrame:self.view.frame
@@ -414,7 +415,7 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 
     [wkWebView.configuration.preferences setValue:@TRUE
                                            forKey:@"allowFileAccessFromFileURLs"];
-    [self setWKWebViewScrollEnabled:true];
+    [self setWKWebViewScrollEnabled:false];
     // Needed to show alerts. Check the WKUIDelegate protocol and the
     // runJavaScriptAlertPanelWithMessage method in this file :(
     wkWebView.UIDelegate = self;

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		738C5AB92190DBBF003AAD2E /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 738C5AB82190DBBF003AAD2E /* Settings.bundle */; };
 		BD61CF8C1F33FB1700733763 /* WebARonARKit.js in Resources */ = {isa = PBXBuildFile; fileRef = BD61CF8B1F33FA0A00733763 /* WebARonARKit.js */; };
 		E1C5EBAF1F59C45A00C667C2 /* ProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = E1C5EBAE1F59C45A00C667C2 /* ProgressView.m */; };
 		E1F3E62A200817CA00156904 /* NavigationView.m in Sources */ = {isa = PBXBuildFile; fileRef = E1F3E629200817CA00156904 /* NavigationView.m */; };
@@ -33,6 +34,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		738C5AB82190DBBF003AAD2E /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		BD61CF8B1F33FA0A00733763 /* WebARonARKit.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = WebARonARKit.js; sourceTree = "<group>"; };
 		E1C5EBAE1F59C45A00C667C2 /* ProgressView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProgressView.m; sourceTree = "<group>"; };
 		E1C5EBB01F59C47000C667C2 /* ProgressView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProgressView.h; sourceTree = "<group>"; };
@@ -102,6 +104,7 @@
 				E1C5EBAE1F59C45A00C667C2 /* ProgressView.m */,
 				E1F3E6282008178300156904 /* NavigationView.h */,
 				E1F3E629200817CA00156904 /* NavigationView.m */,
+				738C5AB82190DBBF003AAD2E /* Settings.bundle */,
 			);
 			path = WebARonARKit;
 			sourceTree = "<group>";
@@ -166,6 +169,7 @@
 			files = (
 				F66038791EF5FCC100385A4C /* LaunchScreen.storyboard in Resources */,
 				F66038761EF5FCC100385A4C /* Assets.xcassets in Resources */,
+				738C5AB92190DBBF003AAD2E /* Settings.bundle in Resources */,
 				F66038741EF5FCC100385A4C /* Main.storyboard in Resources */,
 				BD61CF8C1F33FB1700733763 /* WebARonARKit.js in Resources */,
 			);

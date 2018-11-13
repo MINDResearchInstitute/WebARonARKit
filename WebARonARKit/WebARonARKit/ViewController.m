@@ -71,6 +71,7 @@ const bool SEND_CAMERA_FRAME_TO_JS = true;
 // Use these values to control the camera frame quality
 const float CAMERA_FRAME_SCALE_FACTOR = 0.4;
 const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
+double lastSentTime = 0;
 
 @interface ViewController ()<MTKViewDelegate, ARSessionDelegate>
 
@@ -226,6 +227,7 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
             [urlTextField setText:[url absoluteString]];
         }
         [wkWebView goBack];
+        [self hideAddressBar];
     }
 }
 
@@ -235,6 +237,7 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 
 - (void)refreshButtonClicked:(UIButton *)button {
     [wkWebView reload];
+    [self hideAddressBar];
 }
 
 - (void)setShowCameraFeed:(bool)show {
@@ -432,8 +435,9 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 
     // Load the default website.
     NSString *defaultSite =
-//        @"https://storage.googleapis.com/czoo/content/teddyar/handle.html";
-          @"https://192.168.1.11:8080/content/polygonar/handle.html?testclass=PolygonARHandle";
+        @"https://storage.googleapis.com/czoo/content/polygonar/handle.html";
+//    @"https://192.168.1.11:8080/content/polygonar/handle.html?testclass=PolygonARHandle";
+//          @"https://172.17.179.118:8080/content/polygonar/handle.html";
 //    @"http://www.boxfactura.com/pulltorefresh.js/demos/basic.html";
 //    @"https://10.0.1.24:8080/content/timesync/index.html";
 //    @"https://10.0.1.24:8080/content/sounddropoff/handle.html";
@@ -464,18 +468,19 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
     [self initUrlTextField];
     [self initButtons];
     [self initProgressView];
+    [self hideAddressBar];
 }
 
 - (void)initNavigationBacking {
     _navigationBacking = [[NavigationView alloc] init];
     _navigationBacking.backgroundColor = [UIColor whiteColor];
-    [self.view addSubview:_navigationBacking];
+    //[self.view addSubview:_navigationBacking];
 }
 
 - (void)initUrlTextField {
     urlTextFieldActive = false;
     urlTextField = [[UITextField alloc] init];
-    [urlTextField setBackgroundColor:[UIColor clearColor]];
+    [urlTextField setBackgroundColor:[UIColor whiteColor]];
     [urlTextField
      setTextColor:[UIColor colorWithRed:0.2f green:0.2f blue:0.2f alpha:1.0]];
     [urlTextField setKeyboardType:UIKeyboardTypeURL];
@@ -499,7 +504,7 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 - (void)initBackButton {
     backButton = [[UIButton alloc] init];
     UIImage *backIcon = [UIImage imageNamed:@"BackIcon"];
-    [backButton setBackgroundColor:[UIColor clearColor]];
+    [backButton setBackgroundColor:[UIColor whiteColor]];
     [backButton setImage:backIcon forState:UIControlStateNormal];
     [backButton addTarget:self
                    action:@selector(backButtonClicked:)
@@ -509,13 +514,30 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 
 - (void)initRefreshButton {
     refreshButton = [[UIButton alloc] init];
-    [refreshButton setBackgroundColor:[UIColor clearColor]];
+    [refreshButton setBackgroundColor:[UIColor whiteColor]];
     UIImage *refreshIcon = [UIImage imageNamed:@"RefreshIcon"];
     [refreshButton setImage:refreshIcon forState:UIControlStateNormal];
     [refreshButton addTarget:self
                       action:@selector(refreshButtonClicked:)
             forControlEvents:UIControlEventTouchDown];
     [self.view addSubview:refreshButton];
+}
+
+- (void)showAddressBar {
+    backButton.hidden = NO;
+    refreshButton.hidden = NO;
+    urlTextField.hidden = NO;
+    [urlTextField becomeFirstResponder];
+    [urlTextField setSelectedTextRange:[urlTextField
+                    textRangeFromPosition:[urlTextField endOfDocument]
+                  toPosition:[urlTextField endOfDocument]]];
+}
+
+- (void)hideAddressBar {
+    [urlTextField resignFirstResponder];
+    backButton.hidden = YES;
+    refreshButton.hidden = YES;
+    urlTextField.hidden = YES;
 }
 
 - (void)dealloc {
@@ -533,7 +555,7 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 
 - (void)initProgressView {
     _progressView = [[ProgressView alloc] init];
-    [self.view addSubview:_progressView];
+    //[self.view addSubview:_progressView];
     [self setProgressViewColorSuccessful];
     [self startAndShowProgressView];
 }
@@ -1035,18 +1057,23 @@ didRemoveAnchors:(nonnull NSArray<ARAnchor *> *)anchors {
     position[0] = pModelMatrix[12];
     position[1] = pModelMatrix[13];
     position[2] = pModelMatrix[14];
+    
 
     // Get the camera frame in base 64.
     NSString* base64ImageString = @"";
     if (SEND_CAMERA_FRAME_TO_JS) {
-      base64ImageString = [self getBase64ImageFromPixelBuffer:
-          frame.capturedImage];
-      if (!base64ImageString) {
-        base64ImageString = @"";
-      } else {
-        base64ImageString = [NSString stringWithFormat:
-            @"data:image/jpg;base64, %@", base64ImageString];
-      }
+        double frameTimestamp = [frame timestamp];
+        if (frameTimestamp - lastSentTime > 0.04) {
+            lastSentTime = frameTimestamp;
+            base64ImageString = [self getBase64ImageFromPixelBuffer:
+                                 frame.capturedImage];
+            if (!base64ImageString) {
+                base64ImageString = @"";
+            } else {
+                base64ImageString = [NSString stringWithFormat:
+                                     @"data:image/jpg;base64, %@", base64ImageString];
+            }
+        }
     }
   
     // Create a NSDictionary that will be parsed as a json and then passed to the JS side
@@ -1291,6 +1318,7 @@ didFailProvisionalNavigation:(WKNavigation *)navigation
             [urlTextField setFont:[UIFont systemFontOfSize:17]];
         }
     }
+    [self hideAddressBar];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
@@ -1302,6 +1330,7 @@ didFailProvisionalNavigation:(WKNavigation *)navigation
         [self storeURLInUserDefaults:urlString];
         [urlTextField resignFirstResponder];
         result = YES;
+        [self hideAddressBar];
     }
     return result;
 }
@@ -1409,6 +1438,8 @@ cameraDidChangeTrackingState:(ARCamera *)camera {
             [self getAudioMeters];
         } else if ([method isEqualToString:@"playVibrate"]) {
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+        } else if ([method isEqualToString:@"showAddressBar"]) {
+            [self showAddressBar];
         } else {
             NSLog(@"WARNING: Unknown message received: '%@'", method);
         }

@@ -458,9 +458,7 @@ double lastSentTime = 0;
     [self initOrientationNotifications];
     [self updateOrientation];
     [self updateInterface];
-    
     [self initBeaconServices];
-    [self monitorBeacon:@"30ED98FF-2900-441A-802F-9C398FC199D2" major:1 minor:2 name:@"mind.BeaconTest"];
 }
 
 - (void)initOrientationNotifications {

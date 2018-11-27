@@ -75,7 +75,7 @@ const float CAMERA_FRAME_SCALE_FACTOR = 0.4;
 const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 double lastSentTime = 0;
 
-@interface ViewController ()<MTKViewDelegate, ARSessionDelegate>
+@interface ViewController ()<MTKViewDelegate, ARSessionDelegate, CBPeripheralManagerDelegate, CLLocationManagerDelegate>
 
 @property(nonatomic, strong) ARSession *session;
 @property(nonatomic, strong) Renderer *renderer;
@@ -88,7 +88,7 @@ double lastSentTime = 0;
 
 @property(nonatomic,strong) CLLocationManager * locationManager;
 @property(nonatomic,strong) CLBeaconRegion * beaconRegion;
-@property(nonatomic,strong) NSDictionary * peripheralData;
+@property(nonatomic,strong) NSMutableArray * pendingAdvertiseBeacon;
 @property(nonatomic,strong) CBPeripheralManager * peripheralManager;
 
 @end
@@ -459,7 +459,8 @@ double lastSentTime = 0;
     [self updateOrientation];
     [self updateInterface];
     
-    [self initIBeacon];
+    [self initBeaconServices];
+    [self monitorBeacon:@"30ED98FF-2900-441A-802F-9C398FC199D2" major:1 minor:2 name:@"mind.BeaconTest"];
 }
 
 - (void)initOrientationNotifications {
@@ -1451,6 +1452,10 @@ cameraDidChangeTrackingState:(ARCamera *)camera {
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
         } else if ([method isEqualToString:@"showAddressBar"]) {
             [self showAddressBar];
+        } else if ([method isEqualToString:@"advertiseBeacon"]) {
+            [self advertiseBeacon:params[0] major:[params[1] intValue] minor:[params[2] intValue] name:params[3]];
+        } else if ([method isEqualToString:@"monitorBeacon"]) {
+            [self monitorBeacon:params[0] major:[params[1] intValue] minor:[params[2] intValue] name:params[3]];
         } else {
             NSLog(@"WARNING: Unknown message received: '%@'", method);
         }
@@ -1495,34 +1500,41 @@ cameraDidChangeTrackingState:(ARCamera *)camera {
   return nil;
 }
 
-- (void)initIBeacon {
-    // iBeacon
+- (void)initBeaconServices {
     _locationManager = [[CLLocationManager alloc] init];
     _locationManager.delegate = self;
     [_locationManager requestWhenInUseAuthorization];
-    
-    NSUUID *proximityUUID = [[NSUUID alloc] initWithUUIDString:@"30ED98FF-2900-441A-802F-9C398FC199D2"];
-    CLBeaconMajorValue major = 1;
-    CLBeaconMinorValue minor = 2;
-    NSString *beaconID = @"mind.BeaconTest";
-    
-    _beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID
-                                                            major:major
-                                                            minor:minor
-                                                       identifier:beaconID];
-    
-    _peripheralData = [_beaconRegion peripheralDataWithMeasuredPower: nil];
+    _pendingAdvertiseBeacon = [[NSMutableArray alloc] initWithCapacity:8];
     _peripheralManager = [[CBPeripheralManager alloc] initWithDelegate: self
                                                                  queue:nil];
+}
+
+- (void)advertiseBeacon:(NSString *)uuid major:(NSInteger)major minor:(NSInteger)minor name:(NSString*)name {
+    CLBeaconRegion * region = [[CLBeaconRegion alloc] initWithProximityUUID:[[NSUUID alloc] initWithUUIDString:uuid]
+                                                                      major:major
+                                                                      minor:minor
+                                                                 identifier:name];
     
+    [_pendingAdvertiseBeacon addObject:[region peripheralDataWithMeasuredPower: nil]];
+    [self peripheralManagerDidUpdateState:_peripheralManager];
+}
+
+- (void)monitorBeacon:(NSString *)uuid major:(NSInteger)major minor:(NSInteger)minor name:(NSString*)name {
+    CLBeaconRegion * region = [[CLBeaconRegion alloc] initWithProximityUUID:[[NSUUID alloc] initWithUUIDString:uuid]
+                                                            major:major
+                                                            minor:minor
+                                                       identifier:name];
     if ([CLLocationManager isMonitoringAvailableForClass:CLBeaconRegion.class]) {
-        [_locationManager startRangingBeaconsInRegion:_beaconRegion];
+        [_locationManager startRangingBeaconsInRegion:region];
     }
 }
 
 - (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral {
     if ([peripheral state] == CBManagerStatePoweredOn) {
-        [peripheral startAdvertising:_peripheralData];
+        for (id data in _pendingAdvertiseBeacon) {
+            [peripheral startAdvertising:data];
+        }
+        [_pendingAdvertiseBeacon removeAllObjects];
     } else if ([peripheral state] == CBManagerStatePoweredOff) {
         [peripheral stopAdvertising];
     }
@@ -1549,6 +1561,7 @@ cameraDidChangeTrackingState:(ARCamera *)camera {
                 break;
         }
         [jsonArray addObject: @{
+                                @"proximityUUID":[[beacon proximityUUID] UUIDString],
                                 @"proximity":proximity,
                                 @"rssi":[NSNumber numberWithInt:(int)[beacon rssi]],
                                 @"accuracy":[NSNumber numberWithDouble:(double)[beacon accuracy]]

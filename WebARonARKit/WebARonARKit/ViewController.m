@@ -23,6 +23,8 @@
 #import <CoreAudioKit/CoreAudioKit.h>
 #import <AVFoundation/AVFoundation.h>
 #import <CoreAudio/CoreAudioTypes.h>
+#import <CoreLocation/CoreLocation.h>
+#import <CoreBluetooth/CoreBluetooth.h>
 
 #define FBOX(x) [NSNumber numberWithFloat:x]
 
@@ -83,6 +85,12 @@ double lastSentTime = 0;
 @property(nonatomic, strong) AVAudioRecorder* recorder;
 @property(nonatomic, strong) NSTimer *meterTimer;
 @property(nonatomic, strong) AVAudioSession *audioSession;
+
+@property(nonatomic,strong) CLLocationManager * locationManager;
+@property(nonatomic,strong) CLBeaconRegion * beaconRegion;
+@property(nonatomic,strong) NSDictionary * peripheralData;
+@property(nonatomic,strong) CBPeripheralManager * peripheralManager;
+
 @end
 
 @interface MTKView ()<RenderDestinationProvider>
@@ -435,8 +443,9 @@ double lastSentTime = 0;
 
     // Load the default website.
     NSString *defaultSite =
-        @"https://storage.googleapis.com/czoo/content/polygonar/handle.html";
-//    @"https://192.168.1.11:8080/content/polygonar/handle.html?testclass=PolygonARHandle";
+//        @"https://storage.googleapis.com/czoo/content/polygonar/handle.html";
+    @"https://192.168.1.34:8080/content/ibeacon-test/handle.html";
+//    @"https://192.168.1.11:8080/content/polygonar/handle.html?testclass=EquationStationHandle_Add2";
 //          @"https://172.17.179.118:8080/content/polygonar/handle.html";
 //    @"http://www.boxfactura.com/pulltorefresh.js/demos/basic.html";
 //    @"https://10.0.1.24:8080/content/timesync/index.html";
@@ -449,6 +458,8 @@ double lastSentTime = 0;
     [self initOrientationNotifications];
     [self updateOrientation];
     [self updateInterface];
+    
+    [self initIBeacon];
 }
 
 - (void)initOrientationNotifications {
@@ -1484,4 +1495,84 @@ cameraDidChangeTrackingState:(ARCamera *)camera {
   return nil;
 }
 
+- (void)initIBeacon {
+    // iBeacon
+    _locationManager = [[CLLocationManager alloc] init];
+    _locationManager.delegate = self;
+    [_locationManager requestWhenInUseAuthorization];
+    
+    NSUUID *proximityUUID = [[NSUUID alloc] initWithUUIDString:@"30ED98FF-2900-441A-802F-9C398FC199D2"];
+    CLBeaconMajorValue major = 1;
+    CLBeaconMinorValue minor = 2;
+    NSString *beaconID = @"mind.BeaconTest";
+    
+    _beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID
+                                                            major:major
+                                                            minor:minor
+                                                       identifier:beaconID];
+    
+    _peripheralData = [_beaconRegion peripheralDataWithMeasuredPower: nil];
+    _peripheralManager = [[CBPeripheralManager alloc] initWithDelegate: self
+                                                                 queue:nil];
+    
+    if ([CLLocationManager isMonitoringAvailableForClass:CLBeaconRegion.class]) {
+        [_locationManager startRangingBeaconsInRegion:_beaconRegion];
+    }
+}
+
+- (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral {
+    if ([peripheral state] == CBManagerStatePoweredOn) {
+        [peripheral startAdvertising:_peripheralData];
+    } else if ([peripheral state] == CBManagerStatePoweredOff) {
+        [peripheral stopAdvertising];
+    }
+}
+
+- (void)locationManager:(CLLocationManager *)manager
+        didRangeBeacons:(NSArray<CLBeacon *> *)beacons
+               inRegion:(CLBeaconRegion *)region {
+    NSMutableArray *jsonArray = [NSMutableArray arrayWithCapacity:[beacons count]];
+    for (id beacon in beacons) {
+        id proximity;
+        switch ([beacon proximity]) {
+            case CLProximityUnknown:
+                proximity = @"unknown";
+                break;
+            case CLProximityImmediate:
+                proximity = @"immediate";
+                break;
+            case CLProximityNear:
+                proximity = @"near";
+                break;
+            case CLProximityFar:
+                proximity = @"far";
+                break;
+        }
+        [jsonArray addObject: @{
+                                @"proximity":proximity,
+                                @"rssi":[NSNumber numberWithInt:(int)[beacon rssi]],
+                                @"accuracy":[NSNumber numberWithDouble:(double)[beacon accuracy]]
+                                }];
+    }
+    
+    // Pass the dictionary to JSON and back to a string.
+    NSError* error;
+    NSData* jsonData =
+    [NSJSONSerialization dataWithJSONObject:jsonArray
+                                    options:NSJSONWritingPrettyPrinted error:&error];
+    NSString* jsonString = [[NSString alloc] initWithData:jsonData
+                                                 encoding:NSUTF8StringEncoding];
+    // This will be the final JS code to evaluate
+    NSString* jsCode =
+    [NSString stringWithFormat:
+     @"if (window.iBeaconListener) "
+     @"window.iBeaconListener(%@)",
+     jsonString];
+    
+    // Execute the JS code
+    [wkWebView
+     evaluateJavaScript:jsCode
+     completionHandler:^(id data, NSError *error) {
+     }];
+}
 @end
